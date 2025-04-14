@@ -1,86 +1,117 @@
 /**
  * Explore Options - Main Component
- * A standalone component for exploring loan scenarios
+ * Main controller that coordinates the Tabs, EMI, and Extra Payment managers
  */
 class ExploreOptions {
   constructor(config = {}) {
-    this.config = {
-      container: config.container || '#explore-options',
-      theme: config.theme || 'dark',
-      onScenarioChange: config.onScenarioChange || function() {},
-      loanData: config.loanData || {
-        amount: 10000000,
-        currentRate: 9,
-        newRate: 8.1,
-        currentEMI: 89973,
-        newEMI: 84267,
-        tenure: 240 // months
-      }
+    // Store container reference
+    this.container = document.querySelector(config.container || '#explore-options');
+    this.onScenarioChange = config.onScenarioChange || function() {};
+    
+    // Initialize loan data with defaults or provided values
+    this.loanData = config.loanData || {
+      amount: 10000000,        // Principal amount (₹1 crore)
+      currentRate: 9,          // Current interest rate (9%)
+      newRate: 8.1,            // New interest rate (8.1%)
+      currentEMI: 89973,       // Current EMI amount
+      tenure: 240              // Loan tenure in months (20 years)
     };
     
-    // Initialize managers
-    this.initializeManagers();
+    // Create calculation helper - centralized calculation functions
+    this.calculationHelper = new CalculationHelper();
     
-    // Apply theme
-    this.applyTheme();
+    // Calculate the new EMI if not provided
+    if (!this.loanData.newEMI) {
+      this.loanData.newEMI = this.calculationHelper.calculateEMI(
+        this.loanData.amount,
+        this.loanData.newRate,
+        this.loanData.tenure
+      );
+    }
     
-    // Set up callbacks
-    this.setupCallbacks();
+    // Initialize managers with shared loan data
+    this.initManagers();
+    
+    // Initialize Same Tenure tab data
+    this.initSameTenureTab();
   }
   
   /**
-   * Initialize the tab, EMI and extra payment managers
+   * Initialize tab, EMI, and extra payment managers
    */
-  initializeManagers() {
-    // Initialize tab manager
+  initManagers() {
+    // Create tab manager
     this.tabManager = new TabManager({
+      container: this.container,
       onTabChange: (tabId) => this.handleTabChange(tabId)
     });
     
-    // Initialize EMI manager
+    // Create EMI manager
     this.emiManager = new EMIManager({
-      loanData: this.config.loanData
+      container: this.container,
+      loanData: this.loanData,
+      calculationHelper: this.calculationHelper
     });
     
-    // Initialize extra payment manager
+    // Create extra payment manager
     this.extraPaymentManager = new ExtraPaymentManager({
-      loanData: this.config.loanData
+      container: this.container,
+      loanData: this.loanData,
+      calculationHelper: this.calculationHelper
     });
   }
   
   /**
-   * Apply the selected theme
+   * Initialize Same Tenure tab with calculated values
    */
-  applyTheme() {
-    const container = document.querySelector(this.config.container);
-    if (container) {
-      container.classList.add(`theme-${this.config.theme}`);
+  initSameTenureTab() {
+    // Get DOM elements
+    const newEMIElement = this.container.querySelector('#same-tenure .metric:nth-child(1) .metric-value');
+    const monthlySavingElement = this.container.querySelector('#same-tenure .metric:nth-child(2) .metric-value');
+    const interestSavingElement = this.container.querySelector('#same-tenure .metric-row:nth-child(2) .metric-value');
+    
+    if (!newEMIElement || !monthlySavingElement || !interestSavingElement) return;
+    
+    // Calculate values
+    const monthlySaving = this.loanData.currentEMI - this.loanData.newEMI;
+    const totalInterestSaving = monthlySaving * this.loanData.tenure;
+    
+    // Update UI
+    newEMIElement.textContent = `₹${this.calculationHelper.formatCurrency(this.loanData.newEMI)}`;
+    monthlySavingElement.textContent = `₹${this.calculationHelper.formatCurrency(monthlySaving)}`;
+    interestSavingElement.textContent = `₹${this.calculationHelper.formatCurrency(totalInterestSaving)}`;
+    
+    // Update subtexts
+    const emiSubtext = this.container.querySelector('#same-tenure .metric:nth-child(1) .metric-subtext');
+    const savingSubtext = this.container.querySelector('#same-tenure .metric:nth-child(2) .metric-subtext');
+    
+    if (emiSubtext) {
+      emiSubtext.textContent = `was ₹${this.calculationHelper.formatCurrency(this.loanData.currentEMI)}`;
+    }
+    
+    if (savingSubtext) {
+      const savingPercent = Math.round((monthlySaving / this.loanData.currentEMI) * 100);
+      savingSubtext.textContent = `${savingPercent}% less`;
     }
   }
   
   /**
-   * Set up callbacks for scenario changes
-   */
-  setupCallbacks() {
-    this.handleTabChange(this.tabManager.getActiveTab());
-  }
-  
-  /**
-   * Handle tab change events
+   * Handle tab changes and trigger appropriate updates
    * @param {string} tabId - The ID of the selected tab
    */
   handleTabChange(tabId) {
     let scenarioData = {
       type: tabId,
-      loanData: this.config.loanData
+      loanData: this.loanData
     };
     
     // Get scenario-specific data
     switch (tabId) {
       case 'same-tenure':
+        const monthlySaving = this.loanData.currentEMI - this.loanData.newEMI;
         scenarioData.savings = {
-          monthlyEMI: this.config.loanData.currentEMI - this.config.loanData.newEMI,
-          totalInterest: (this.config.loanData.currentEMI - this.config.loanData.newEMI) * this.config.loanData.tenure
+          monthlyEMI: monthlySaving,
+          totalInterest: monthlySaving * this.loanData.tenure
         };
         break;
         
@@ -93,43 +124,37 @@ class ExploreOptions {
         break;
     }
     
-    // Call the callback
-    if (typeof this.config.onScenarioChange === 'function') {
-      this.config.onScenarioChange(scenarioData);
+    // Call the callback with scenario data
+    if (typeof this.onScenarioChange === 'function') {
+      this.onScenarioChange(scenarioData);
     }
   }
   
   /**
-   * Update the loan data
-   * @param {Object} loanData - New loan data
+   * Update loan data and refresh all calculations
+   * @param {Object} newLoanData - New loan data from API
    */
-  updateLoanData(loanData) {
-    this.config.loanData = { ...this.config.loanData, ...loanData };
+  updateLoanData(newLoanData) {
+    // Update loan data
+    this.loanData = { ...this.loanData, ...newLoanData };
     
-    // Refresh managers with new data
-    this.initializeManagers();
+    // Calculate the new EMI if not provided
+    if (!this.loanData.newEMI) {
+      this.loanData.newEMI = this.calculationHelper.calculateEMI(
+        this.loanData.amount,
+        this.loanData.newRate,
+        this.loanData.tenure
+      );
+    }
     
-    // Re-trigger scenario change
+    // Update all managers
+    this.emiManager.updateLoanData(this.loanData);
+    this.extraPaymentManager.updateLoanData(this.loanData);
+    
+    // Update Same Tenure tab
+    this.initSameTenureTab();
+    
+    // Refresh active tab data
     this.handleTabChange(this.tabManager.getActiveTab());
   }
-  
-  /**
-   * Switch to a specific tab
-   * @param {string} tabId - The ID of the tab to switch to
-   */
-  switchTab(tabId) {
-    this.tabManager.setActiveTab(tabId);
-  }
-  
-  /**
-   * Get the current scenario data
-   * @returns {Object} The current scenario data
-   */
-  getCurrentScenario() {
-    const activeTab = this.tabManager.getActiveTab();
-    return this.handleTabChange(activeTab);
-  }
 }
-
-// Make available globally
-window.ExploreOptions = ExploreOptions;

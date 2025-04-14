@@ -3,9 +3,10 @@
  */
 class TabManager {
   constructor(config = {}) {
-    this.tabs = document.querySelectorAll('.segment');
-    this.tabContents = document.querySelectorAll('.scenario-content');
-    this.segmentHighlight = document.querySelector('.segment-highlight');
+    this.container = config.container || document;
+    this.tabs = this.container.querySelectorAll('.segment');
+    this.tabContents = this.container.querySelectorAll('.scenario-content');
+    this.segmentHighlight = this.container.querySelector('.segment-highlight');
     this.activeTab = 'same-tenure'; // Default active tab
     this.onTabChange = config.onTabChange || function() {};
     
@@ -35,15 +36,15 @@ class TabManager {
    */
   switchTab(tabId, index) {
     // Update active tab
-    document.querySelector('.segment.active').classList.remove('active');
+    this.container.querySelector('.segment.active').classList.remove('active');
     this.tabs[index].classList.add('active');
     
     // Update tab highlight position
     this.segmentHighlight.style.transform = `translateX(${index * 100}%)`;
     
     // Show corresponding content
-    document.querySelector('.scenario-content.active').classList.remove('active');
-    document.getElementById(tabId).classList.add('active');
+    this.container.querySelector('.scenario-content.active').classList.remove('active');
+    this.container.getElementById(tabId).classList.add('active');
     
     // Store active tab
     this.activeTab = tabId;

@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Explore Your Loan Options</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
   <style>
-    /* Demo page styling - not part of the component */
+    /* Component Styles */
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background-color: #1a2127;
@@ -38,6 +37,273 @@
       margin-bottom: 20px;
     }
     
+    .explore-options {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .scenario-title {
+      font-size: 16px;
+      color: #9aa0a6;
+      margin-bottom: 15px;
+    }
+    
+    .segment-control {
+      display: flex;
+      background-color: rgba(255,255,255,0.05);
+      border-radius: 30px;
+      padding: 3px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .segment {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 14px;
+      z-index: 1;
+      transition: color 0.3s;
+      white-space: nowrap;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .segment::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255,255,255,0.1);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .segment:active::after {
+      opacity: 1;
+    }
+    
+    .segment-highlight {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      width: calc(33.333% - 6px);
+      background-color: #0984e3;
+      border-radius: 30px;
+      transition: transform 0.3s ease;
+    }
+    
+    .segment.active {
+      color: white;
+      font-weight: 500;
+    }
+    
+    .segment:not(.active) {
+      color: #9aa0a6;
+    }
+    
+    .scenario-content {
+      padding: 10px 5px;
+      display: none;
+    }
+    
+    .scenario-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .metric {
+      flex: 1;
+      background-color: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      margin: 0 5px;
+    }
+    
+    .metric:first-child {
+      margin-left: 0;
+    }
+    
+    .metric:last-child {
+      margin-right: 0;
+    }
+    
+    .metric-label {
+      font-size: 14px;
+      color: #9aa0a6;
+      margin-bottom: 5px;
+    }
+    
+    .metric-value {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .value-positive {
+      color: #a5e887;
+    }
+    
+    .metric-subtext {
+      font-size: 12px;
+      color: #9aa0a6;
+      margin-top: 5px;
+    }
+    
+    .slider-container {
+      margin: 20px 0;
+    }
+    
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .slider-title {
+      font-size: 14px;
+      color: #9aa0a6;
+    }
+    
+    .slider-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #a5e887;
+    }
+    
+    .slider {
+      -webkit-appearance: none;  /* Safari and Chrome */
+  -moz-appearance: none;     /* Firefox */
+  -ms-appearance: none;      /* Internet Explorer */
+  appearance: none;          /* Standard syntax */
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.2);
+      outline: none;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #0984e3;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #0984e3;
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .slider-range {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #9aa0a6;
+      margin-top: 5px;
+    }
+    
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .select-container {
+      min-width: 130px;
+    }
+    
+    .frequency-select {
+      background-color: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 5px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: white;
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px top 50%;
+      background-size: 10px auto;
+      cursor: pointer;
+    }
+    
+    .preset-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+    }
+    
+    .preset-button {
+      background-color: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 8px 0;
+      font-size: 12px;
+      color: white;
+      text-align: center;
+      flex: 1;
+      margin: 0 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .preset-button:hover {
+      background-color: rgba(255,255,255,0.15);
+    }
+    
+    .preset-button:active {
+      background-color: rgba(255,255,255,0.2);
+    }
+    
+    .preset-button:first-child {
+      margin-left: 0;
+    }
+    
+    .preset-button:last-child {
+      margin-right: 0;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .tap-highlight {
+      animation: tapHighlight 0.3s ease-out;
+    }
+    
+    @keyframes tapHighlight {
+      0% { background-color: rgba(255,255,255,0); }
+      50% { background-color: rgba(255,255,255,0.2); }
+      100% { background-color: rgba(255,255,255,0); }
+    }
+    
+    /* Demo output and loan data sections */
     .demo-controls {
       margin-top: 30px;
       padding: 20px;
@@ -58,14 +324,76 @@
       border-radius: 5px;
       font-family: monospace;
       white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    
+    .loan-data-summary {
+      background-color: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .loan-data-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .loan-data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .loan-data-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    
+    .loan-data-label {
+      color: #9aa0a6;
+    }
+    
+    .loan-data-value {
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
   <div class="demo-container">
-     <!-- <div class="demo-header">
+    <!--<div class="demo-header">
       <div class="demo-title">Explore Your Loan Options</div>
       <div class="demo-subtitle">Interactive loan scenario explorer component</div>
+    </div>
+    
+     Loan Data Summary 
+    <div class="loan-data-summary">
+      <div class="loan-data-title">Current Loan Details:</div>
+      <div class="loan-data-grid">
+        <div class="loan-data-item">
+          <span class="loan-data-label">Principal Amount:</span>
+          <span class="loan-data-value">₹1,00,00,000</span>
+        </div>
+        <div class="loan-data-item">
+          <span class="loan-data-label">Current Rate:</span>
+          <span class="loan-data-value">9.0%</span>
+        </div>
+        <div class="loan-data-item">
+          <span class="loan-data-label">New Rate:</span>
+          <span class="loan-data-value">8.1%</span>
+        </div>
+        <div class="loan-data-item">
+          <span class="loan-data-label">Current EMI:</span>
+          <span class="loan-data-value">₹89,973</span>
+        </div>
+        <div class="loan-data-item">
+          <span class="loan-data-label">Tenure:</span>
+          <span class="loan-data-value">240 months (20 years)</span>
+        </div>
+      </div>
     </div>-->
     
     <!-- Component Container -->
@@ -84,20 +412,20 @@
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">New EMI</div>
-            <div class="metric-value">₹1,086</div>
-            <div class="metric-subtext">was ₹2,000</div>
+            <div class="metric-value">₹84,267</div>
+            <div class="metric-subtext">was ₹89,973</div>
           </div>
           <div class="metric">
             <div class="metric-label">Monthly Savings</div>
-            <div class="metric-value value-positive">₹914</div>
-            <div class="metric-subtext">45.7% less</div>
+            <div class="metric-value value-positive">₹5,706</div>
+            <div class="metric-subtext">6.3% less</div>
           </div>
         </div>
         
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">Total Interest Saved</div>
-            <div class="metric-value value-positive">₹10,968</div>
+            <div class="metric-value value-positive">₹13,69,440</div>
             <div class="metric-subtext">over loan term</div>
           </div>
         </div>
@@ -115,32 +443,32 @@
         <div class="slider-container">
           <div class="slider-label">
             <div class="slider-title">Adjust your EMI</div>
-            <div class="slider-value">₹2,000</div>
+            <div class="slider-value">₹89,973</div>
           </div>
-          <input type="range" min="2000" max="6000" value="2000" class="slider" id="emiSlider">
+          <input type="range" min="89973" max="269919" value="89973" class="slider" id="emiSlider">
           <div class="slider-range">
-            <span>Current: ₹2,000</span>
-            <span>3x: ₹6,000</span>
+            <span>Current: ₹89,973</span>
+            <span>3x: ₹2,69,919</span>
           </div>
         </div>
         
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">New Tenure</div>
-            <div class="metric-value">12 months</div>
-            <div class="metric-subtext">was 12 months</div>
+            <div class="metric-value">211 months</div>
+            <div class="metric-subtext">was 240 months</div>
           </div>
           <div class="metric">
             <div class="metric-label">Time Saved</div>
-            <div class="metric-value value-positive">0 months</div>
-            <div class="metric-subtext">adjust EMI to see impact</div>
+            <div class="metric-value value-positive">29 months</div>
+            <div class="metric-subtext">12.1% faster payoff</div>
           </div>
         </div>
         
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">Total Interest Saved</div>
-            <div class="metric-value value-positive">₹0</div>
+            <div class="metric-value value-positive">₹16,59,330</div>
             <div class="metric-subtext">vs. original loan</div>
           </div>
         </div>
@@ -149,10 +477,11 @@
       <!-- Extra Payment Scenario Content -->
       <div id="extra-payment" class="scenario-content">
         <div class="preset-buttons">
-          <div class="preset-button" data-value="5000">₹5,000</div>
-          <div class="preset-button" data-value="10000">₹10,000</div>
-          <div class="preset-button" data-value="50000">₹50,000</div>
-          <div class="preset-button" data-value="100000">₹1,00,000</div>
+          <div class="preset-button" data-value="10000">₹10k</div>
+          <div class="preset-button" data-value="20000">₹20k</div>
+          <div class="preset-button" data-value="50000">₹50k</div>
+          <div class="preset-button" data-value="100000">₹1L</div>
+          <div class="preset-button" data-value="200000">₹2L</div>
         </div>
         
         <div class="input-row">
@@ -180,47 +509,61 @@
         <div class="metric-row">
           <div class="metric">
             <div class="metric-label">New Tenure</div>
-            <div class="metric-value">7 months</div>
-            <div class="metric-subtext">was 12 months</div>
+            <div class="metric-value">224 months</div>
+            <div class="metric-subtext">save 16 months</div>
           </div>
           <div class="metric">
             <div class="metric-label">Interest Saved</div>
-            <div class="metric-value value-positive">₹6,240</div>
-            <div class="metric-subtext">with extra payments</div>
+            <div class="metric-value value-positive">₹9,45,210</div>
+            <div class="metric-subtext">with monthly extra payments</div>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Demo Controls -->
-   <!-- <div class="demo-controls">
+    <!-- Demo Controls
+    <div class="demo-controls">
       <div class="demo-control-title">Component Output:</div>
       <div class="demo-output" id="demo-output">No data yet...</div>
     </div> -->
   </div>
   
   <!-- Scripts -->
-  <script src="assets/js/tabs.js"></script>
-  <script src="assets/js/emi.js"></script>
-  <script src="assets/js/extra.js"></script>
-  <script src="assets/js/main.js"></script>
+  <script src="calculationHelper.js"></script>
+  <script src="tabs.js"></script>
+  <script src="emi.js"></script>
+  <script src="extra.js"></script>
+  <script src="main.js"></script>
   
   <script>
     // Initialize component with sample loan data
-    const exploreOptions = new ExploreOptions({
-      container: '#explore-options',
-      loanData: {
-       amount: 10000000,
-        currentRate: 9,
-        newRate: 8.1,
-        currentEMI: 89973,
-        newEMI: 84267,
-        tenure: 240 // months
-      },
-      onScenarioChange: function(scenarioData) {
-        // Display the output in the demo section
-        document.getElementById('demo-output').textContent = JSON.stringify(scenarioData, null, 2);
-      }
+    document.addEventListener('DOMContentLoaded', function() {
+      const exploreOptions = new ExploreOptions({
+        container: '#explore-options',
+        loanData: {
+          amount: 10000000,        // Principal amount
+          currentRate: 9,          // Current interest rate (%)
+          newRate: 8.1,            // New interest rate (%)
+          currentEMI: 89973,       // Current EMI amount
+          tenure: 240              // Loan tenure in months
+        },
+        onScenarioChange: function(scenarioData) {
+          // Display the output in the demo section
+          document.getElementById('demo-output').textContent = JSON.stringify(scenarioData, null, 2);
+        }
+      });
+      
+      // Example of how you would update with API data
+      /*
+      fetch('https://api.example.com/loan-data')
+        .then(response => response.json())
+        .then(data => {
+          exploreOptions.updateLoanData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching loan data:', error);
+        });
+      */
     });
   </script>
 </body>

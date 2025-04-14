@@ -1,48 +1,60 @@
 /**
  * EMI Scenario manager for the Explore Options component
+ * Handles calculations for keeping same EMI with lower interest rate
  */
 class EMIManager {
   constructor(config = {}) {
-    // Default loan parameters
+    this.container = config.container || document;
+    this.calculationHelper = config.calculationHelper;
+    
+    // Store loan data reference - passed from main component
     this.loanData = config.loanData || {
       amount: 10000000,
-        currentRate: 9,
-        newRate: 8.1,
-        currentEMI: 89973,
-        newEMI: 84267,
-        tenure: 240 // months
+      currentRate: 9,
+      newRate: 8.1,
+      currentEMI: 89973,
+      newEMI: 84267,
+      tenure: 240 // months
     };
     
     // Get DOM elements
-    this.emiSlider = document.getElementById('emiSlider');
-    this.emiValue = document.querySelector('#same-emi .slider-value');
-    this.emiPresetButtons = document.querySelectorAll('#same-emi .preset-button');
+    this.emiSlider = this.container.getElementById('emiSlider');
+    this.emiValue = this.container.querySelector('#same-emi .slider-value');
+    this.emiPresetButtons = this.container.querySelectorAll('#same-emi .preset-button');
     
     // Initialize
     this.initSlider();
     this.initPresetButtons();
-    this.updateEMIImpact(); // Initialize calculations
+    this.updateEMIImpact(); // Initialize calculations with pre-filled values
   }
   
   /**
    * Initialize the EMI slider with loan data
    */
-  initSlider() {this.updateEMIImpact();
-    if (!this.emiSlider) return;
+  initSlider() {
     if (!this.emiSlider) return;
     
-    // Set slider range based on current EMI
-    this.emiSlider.min = this.loanData.currentEMI;
-    this.emiSlider.max = this.loanData.currentEMI * 3; // Up to 3x current EMI
-    this.emiSlider.value = this.loanData.currentEMI;
+    // Set slider range based on current EMI - dynamically calculated
+    const minEMI = this.loanData.currentEMI;
+    const maxEMI = this.loanData.currentEMI * 3; // Up to 3x current EMI
+    
+    this.emiSlider.min = minEMI;
+    this.emiSlider.max = maxEMI;
+    this.emiSlider.value = minEMI; // Start with current EMI
+    this.emiSlider.step = Math.max(100, Math.round(minEMI * 0.01)); // 1% of EMI as step
     
     // Update slider range labels
-    const sliderRange = document.querySelector('#same-emi .slider-range');
+    const sliderRange = this.container.querySelector('#same-emi .slider-range');
     if (sliderRange) {
       sliderRange.innerHTML = `
-        <span>Current: ₹${this.formatCurrency(this.loanData.currentEMI)}</span>
-        <span>3x: ₹${this.formatCurrency(this.loanData.currentEMI * 3)}</span>
+        <span>Current: ₹${this.formatCurrency(minEMI)}</span>
+        <span>3x: ₹${this.formatCurrency(maxEMI)}</span>
       `;
+    }
+    
+    // Set initial value display
+    if (this.emiValue) {
+      this.emiValue.textContent = `₹${this.formatCurrency(minEMI)}`;
     }
     
     // Add event listener
@@ -53,7 +65,7 @@ class EMIManager {
    * Initialize preset buttons
    */
   initPresetButtons() {
-    // Update preset button values based on current EMI
+    // Update preset button values based on current EMI - dynamically calculated
     this.emiPresetButtons.forEach(button => {
       const ratio = parseFloat(button.getAttribute('data-ratio') || 1);
       const value = Math.round(this.loanData.currentEMI * ratio);
@@ -75,6 +87,39 @@ class EMIManager {
   }
   
   /**
+   * Calculate loan tenure based on principal, rate and EMI
+   * @param {number} principal - Loan amount
+   * @param {number} ratePercent - Annual interest rate in percent
+   * @param {number} emi - Monthly EMI amount
+   * @returns {number} Tenure in months
+   */
+  calculateTenure(principal, ratePercent, emi) {
+    const monthlyRate = ratePercent / (12 * 100);
+    // Formula: n = -log(1 - P*r/EMI) / log(1+r)
+    // Where n = tenure in months, P = principal, r = monthly rate, EMI = monthly payment
+    const numerator = Math.log(1 - ((principal * monthlyRate) / emi));
+    const denominator = Math.log(1 + monthlyRate);
+    
+    // Handle edge cases
+    if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+      return this.loanData.tenure; // Return original tenure if calculation fails
+    }
+    
+    return Math.ceil(-numerator / denominator);
+  }
+  
+  /**
+   * Calculate total interest paid over loan tenure
+   * @param {number} principal - Loan amount
+   * @param {number} emi - Monthly EMI amount
+   * @param {number} tenureMonths - Loan tenure in months
+   * @returns {number} Total interest paid
+   */
+  calculateTotalInterest(principal, emi, tenureMonths) {
+    return (emi * tenureMonths) - principal;
+  }
+  
+  /**
    * Update calculations based on current slider value
    */
   updateEMIImpact() {
@@ -83,61 +128,78 @@ class EMIManager {
     const emiAmount = parseInt(this.emiSlider.value);
     
     // Format with commas
-    this.emiValue.textContent = `₹${this.formatCurrency(emiAmount)}`;
+    if (this.emiValue) {
+      this.emiValue.textContent = `₹${this.formatCurrency(emiAmount)}`;
+    }
     
-    // Update metrics based on slider
-    const newTenure = document.querySelector('#same-emi .metric:nth-child(1) .metric-value');
-    const timeSaved = document.querySelector('#same-emi .metric:nth-child(2) .metric-value');
+    // Get DOM elements for metrics
+    const newTenureElement = document.querySelector('#same-emi .metric:nth-child(1) .metric-value');
+    const timeSavedElement = document.querySelector('#same-emi .metric:nth-child(2) .metric-value');
+    const interestSavedElement = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
     
-    // Calculate original loan payoff time
-    // (This is a simplified calculation - in a real app you'd use more precise amortization)
-    const oldMonthlyRate = this.loanData.currentRate / (12 * 100);
-    const newMonthlyRate = this.loanData.newRate / (12 * 100);
+    if (!newTenureElement || !timeSavedElement || !interestSavedElement) return;
     
-    // Calculate how long it would take to pay off at the original rate
-    // with the current EMI (original tenure)
-    // This should match this.loanData.tenure
+    // 1. Calculate original tenure at original rate
+    const originalTenure = this.loanData.tenure;
     
-    // Calculate how long it would take to pay off at the NEW rate
-    // with the SAME EMI
-    const newMonths = Math.ceil(
-      Math.log(emiAmount / (emiAmount - this.loanData.amount * newMonthlyRate)) / 
-      Math.log(1 + newMonthlyRate)
+    // 2. Calculate new tenure at new rate with current EMI
+    const newTenure = this.calculateTenure(
+      this.loanData.amount, 
+      this.loanData.newRate, 
+      emiAmount
     );
     
-    // Time saved is the difference
-    const savedMonths = this.loanData.tenure - newMonths;
+    // 3. Calculate months saved
+    const monthsSaved = Math.max(0, originalTenure - newTenure);
     
-    newTenure.textContent = `${newMonths} months`;
-    timeSaved.textContent = `${savedMonths} months`;
+    // 4. Calculate original total interest
+    const originalTotalInterest = this.calculateTotalInterest(
+      this.loanData.amount,
+      this.loanData.currentEMI,
+      originalTenure
+    );
     
-    // Update interest saved based on time saved
-    const interestSavedValue = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
+    // 5. Calculate new total interest
+    const newTotalInterest = this.calculateTotalInterest(
+      this.loanData.amount,
+      emiAmount,
+      newTenure
+    );
     
-    // Calculate total interest paid with original rate
-    const originalTotalInterest = (this.loanData.currentEMI * this.loanData.tenure) - this.loanData.amount;
+    // 6. Calculate interest saved
+    const interestSaved = Math.max(0, originalTotalInterest - newTotalInterest);
     
-    // Calculate total interest paid with new rate and same EMI
-    const newTotalInterest = (emiAmount * newMonths) - this.loanData.amount;
+    // Update UI elements
+    newTenureElement.textContent = `${newTenure} months`;
+    timeSavedElement.textContent = `${monthsSaved} months`;
+    interestSavedElement.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
     
-    // Interest saved is the difference
-    const interestSaved = originalTotalInterest - newTotalInterest;
-    
-    interestSavedValue.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
-    
-    // Update subtext to provide context
+    // Update subtexts
     const timeSubtext = document.querySelector('#same-emi .metric:nth-child(2) .metric-subtext');
-    if (savedMonths === 0) {
-      timeSubtext.textContent = 'adjust EMI to see impact';
-    } else {
-      const percentSaved = Math.round((savedMonths / this.loanData.tenure) * 100);
-      timeSubtext.textContent = `${percentSaved}% faster payoff`;
+    if (timeSubtext) {
+      if (monthsSaved === 0) {
+        timeSubtext.textContent = 'adjust EMI to see impact';
+      } else {
+        const percentSaved = Math.round((monthsSaved / originalTenure) * 100);
+        timeSubtext.textContent = `${percentSaved}% faster payoff`;
+      }
+    }
+    
+    const tenureSubtext = document.querySelector('#same-emi .metric:nth-child(1) .metric-subtext');
+    if (tenureSubtext) {
+      tenureSubtext.textContent = `was ${originalTenure} months`;
+    }
+    
+    const interestSubtext = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-subtext');
+    if (interestSubtext) {
+      interestSubtext.textContent = `vs. original loan`;
     }
     
     return {
       emi: emiAmount,
-      newTenure: newMonths,
-      timeSaved: savedMonths,
+      newTenure: newTenure,
+      originalTenure: originalTenure,
+      monthsSaved: monthsSaved,
       interestSaved: interestSaved
     };
   }
@@ -156,7 +218,6 @@ class EMIManager {
    * @returns {Object} The current EMI scenario data
    */
   getCurrentScenario() {
-    const emiAmount = parseInt(this.emiSlider.value);
     return this.updateEMIImpact();
   }
   
@@ -169,5 +230,16 @@ class EMIManager {
       this.emiSlider.value = value;
       this.updateEMIImpact();
     }
+  }
+  
+  /**
+   * Update loan data reference
+   * @param {Object} loanData - New loan data
+   */
+  updateLoanData(loanData) {
+    this.loanData = loanData;
+    this.initSlider();
+    this.initPresetButtons();
+    this.updateEMIImpact();
   }
 }
