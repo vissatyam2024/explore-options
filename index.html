@@ -364,37 +364,6 @@
 </head>
 <body>
   <div class="demo-container">
-    <!--<div class="demo-header">
-      <div class="demo-title">Explore Your Loan Options</div>
-      <div class="demo-subtitle">Interactive loan scenario explorer component</div>
-    </div>
-    
-     Loan Data Summary 
-    <div class="loan-data-summary">
-      <div class="loan-data-title">Current Loan Details:</div>
-      <div class="loan-data-grid">
-        <div class="loan-data-item">
-          <span class="loan-data-label">Principal Amount:</span>
-          <span class="loan-data-value">₹1,00,00,000</span>
-        </div>
-        <div class="loan-data-item">
-          <span class="loan-data-label">Current Rate:</span>
-          <span class="loan-data-value">9.0%</span>
-        </div>
-        <div class="loan-data-item">
-          <span class="loan-data-label">New Rate:</span>
-          <span class="loan-data-value">8.1%</span>
-        </div>
-        <div class="loan-data-item">
-          <span class="loan-data-label">Current EMI:</span>
-          <span class="loan-data-value">₹89,973</span>
-        </div>
-        <div class="loan-data-item">
-          <span class="loan-data-label">Tenure:</span>
-          <span class="loan-data-value">240 months (20 years)</span>
-        </div>
-      </div>
-    </div>-->
     
     <!-- Component Container -->
     <div id="explore-options" class="explore-options">
@@ -564,7 +533,130 @@
           console.error('Error fetching loan data:', error);
         });
       */
-    });
+    // Make it globally available
+    window.exploreOptions = exploreOptions;
+  });
   </script>
+<script>
+  // Direct tab handling script
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get tab elements
+    const tabs = document.querySelectorAll('#explore-options .segment');
+    const tabHighlight = document.querySelector('#explore-options .segment-highlight');
+    
+    // Add click listeners to each tab
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', function() {
+        // Get tab ID
+        const tabId = this.getAttribute('data-tab');
+        
+        // Remove active class from current active tab
+        document.querySelector('#explore-options .segment.active')
+          .classList.remove('active');
+        
+        // Add active class to clicked tab
+        this.classList.add('active');
+        
+        // Move highlight
+        tabHighlight.style.transform = `translateX(${index * 100}%)`;
+        
+        // Hide current active content
+        document.querySelector('#explore-options .scenario-content.active')
+          .classList.remove('active');
+        
+        // Show selected tab content
+        document.getElementById(tabId).classList.add('active');
+        
+        // If ExploreOptions instance exists, call its method
+        if (window.exploreOptions && typeof window.exploreOptions.handleTabChange === 'function') {
+          window.exploreOptions.handleTabChange(tabId);
+        }
+      });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // --- Same EMI Tab Preset Buttons ---
+    const emiPresetButtons = document.querySelectorAll('#same-emi .preset-button');
+    const emiSlider = document.getElementById('emiSlider');
+    const emiValue = document.querySelector('#same-emi .slider-value');
+    
+    emiPresetButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Get the ratio from data attribute
+        const ratio = parseFloat(this.getAttribute('data-ratio') || 1);
+        const currentEMI = 89973; // This should match your initial data
+        const value = Math.round(currentEMI * ratio);
+        
+        // Update slider value
+        emiSlider.value = value;
+        
+        // Update displayed value
+        emiValue.textContent = `₹${value.toLocaleString('en-IN')}`;
+        
+        // Trigger change event on slider to update calculations
+        const event = new Event('input', { bubbles: true });
+        emiSlider.dispatchEvent(event);
+      });
+    });
+    
+    // --- Extra Payment Tab Preset Buttons ---
+    const extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
+    const extraPaymentSlider = document.getElementById('extraPaymentSlider');
+    const extraPaymentValue = document.querySelector('#extra-payment .slider-value');
+    
+    extraPaymentPresetButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Get value from data attribute
+        const value = parseInt(this.getAttribute('data-value') || 0);
+        
+        // Update slider value
+        extraPaymentSlider.value = value;
+        
+        // Update displayed value
+        extraPaymentValue.textContent = `₹${value.toLocaleString('en-IN')}`;
+        
+        // Trigger change event on slider to update calculations
+        const event = new Event('input', { bubbles: true });
+        extraPaymentSlider.dispatchEvent(event);
+      });
+    });
+    
+    // --- Slider Event Handlers ---
+    // EMI Slider
+    emiSlider.addEventListener('input', function() {
+      // Update displayed value
+      emiValue.textContent = `₹${parseInt(this.value).toLocaleString('en-IN')}`;
+      
+      // Call the ExploreOptions method if available
+      if (window.exploreOptions && typeof window.exploreOptions.updateSameEmiCalculations === 'function') {
+        window.exploreOptions.updateSameEmiCalculations(parseInt(this.value));
+      }
+    });
+    
+    // Extra Payment Slider
+    extraPaymentSlider.addEventListener('input', function() {
+      // Update displayed value
+      extraPaymentValue.textContent = `₹${parseInt(this.value).toLocaleString('en-IN')}`;
+      
+      // Call the ExploreOptions method if available
+      if (window.exploreOptions && typeof window.exploreOptions.updateExtraPaymentCalculations === 'function') {
+        window.exploreOptions.updateExtraPaymentCalculations(parseInt(this.value));
+      }
+    });
+    
+    // Frequency select
+    const frequencySelect = document.getElementById('frequencySelect');
+    frequencySelect.addEventListener('change', function() {
+      // Call the ExploreOptions method if available
+      if (window.exploreOptions && typeof window.exploreOptions.updateExtraPaymentCalculations === 'function') {
+        window.exploreOptions.updateExtraPaymentCalculations(parseInt(extraPaymentSlider.value), this.value);
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
