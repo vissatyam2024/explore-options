@@ -9,12 +9,12 @@ class ExploreOptions {
       theme: config.theme || 'dark',
       onScenarioChange: config.onScenarioChange || function() {},
       loanData: config.loanData || {
-        amount: 100000,
-        currentRate: 10,
-        newRate: 8.7,
-        currentEMI: 2000,
-        newEMI: 1086,
-        tenure: 12 // months
+        amount: 10000000,
+        currentRate: 9,
+        newRate: 8.1,
+        currentEMI: 89973,
+        newEMI: 84267,
+        tenure: 240 // months
       }
     };
     
