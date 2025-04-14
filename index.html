@@ -536,22 +536,22 @@
   <script src="main.js"></script>
   
   <script>
-    // Initialize component with sample loan data
     document.addEventListener('DOMContentLoaded', function() {
-      const exploreOptions = new ExploreOptions({
-        container: '#explore-options',
-        loanData: {
-          amount: 10000000,        // Principal amount
-          currentRate: 9,          // Current interest rate (%)
-          newRate: 8.1,            // New interest rate (%)
-          currentEMI: 89973,       // Current EMI amount
-          tenure: 240              // Loan tenure in months
-        },
-        onScenarioChange: function(scenarioData) {
-          // Display the output in the demo section
-          document.getElementById('demo-output').textContent = JSON.stringify(scenarioData, null, 2);
-        }
-      });
+    // Initialize component with sample loan data
+    const exploreOptions = new ExploreOptions({
+      container: '#explore-options',
+      loanData: {
+        amount: 10000000,        // Principal amount
+        currentRate: 9,          // Current interest rate (%)
+        newRate: 8.1,            // New interest rate (%)
+        currentEMI: 89973,       // Current EMI amount
+        tenure: 240              // Loan tenure in months
+      },
+      onScenarioChange: function(scenarioData) {
+        // Display the output in the demo section
+        document.getElementById('demo-output').textContent = JSON.stringify(scenarioData, null, 2);
+      }
+    });
       
       // Example of how you would update with API data
       /*

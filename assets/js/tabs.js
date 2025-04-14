@@ -44,7 +44,7 @@ class TabManager {
     
     // Show corresponding content
     this.container.querySelector('.scenario-content.active').classList.remove('active');
-    this.container.getElementById(tabId).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
     
     // Store active tab
     this.activeTab = tabId;
