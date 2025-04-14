@@ -5,12 +5,12 @@ class EMIManager {
   constructor(config = {}) {
     // Default loan parameters
     this.loanData = config.loanData || {
-      amount: 100000,
-      currentRate: 10,
-      newRate: 8.7,
-      currentEMI: 2000,
-      newEMI: 1086,
-      tenure: 12 // months
+      amount: 10000000,
+        currentRate: 9,
+        newRate: 8.1,
+        currentEMI: 89973,
+        newEMI: 84267,
+        tenure: 240 // months
     };
     
     // Get DOM elements
@@ -27,7 +27,8 @@ class EMIManager {
   /**
    * Initialize the EMI slider with loan data
    */
-  initSlider() {
+  initSlider() {this.updateEMIImpact();
+    if (!this.emiSlider) return;
     if (!this.emiSlider) return;
     
     // Set slider range based on current EMI
@@ -88,9 +89,23 @@ class EMIManager {
     const newTenure = document.querySelector('#same-emi .metric:nth-child(1) .metric-value');
     const timeSaved = document.querySelector('#same-emi .metric:nth-child(2) .metric-value');
     
-    // Calculate new tenure based on EMI increase
-    const emiRatio = emiAmount / this.loanData.currentEMI;
-    const newMonths = Math.max(1, Math.round(this.loanData.tenure / emiRatio));
+    // Calculate original loan payoff time
+    // (This is a simplified calculation - in a real app you'd use more precise amortization)
+    const oldMonthlyRate = this.loanData.currentRate / (12 * 100);
+    const newMonthlyRate = this.loanData.newRate / (12 * 100);
+    
+    // Calculate how long it would take to pay off at the original rate
+    // with the current EMI (original tenure)
+    // This should match this.loanData.tenure
+    
+    // Calculate how long it would take to pay off at the NEW rate
+    // with the SAME EMI
+    const newMonths = Math.ceil(
+      Math.log(emiAmount / (emiAmount - this.loanData.amount * newMonthlyRate)) / 
+      Math.log(1 + newMonthlyRate)
+    );
+    
+    // Time saved is the difference
     const savedMonths = this.loanData.tenure - newMonths;
     
     newTenure.textContent = `${newMonths} months`;
@@ -98,8 +113,17 @@ class EMIManager {
     
     // Update interest saved based on time saved
     const interestSavedValue = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
-    const interestSaved = Math.round(savedMonths * this.loanData.newEMI);
-    interestSavedValue.textContent = `₹${this.formatCurrency(interestSaved)}`;
+    
+    // Calculate total interest paid with original rate
+    const originalTotalInterest = (this.loanData.currentEMI * this.loanData.tenure) - this.loanData.amount;
+    
+    // Calculate total interest paid with new rate and same EMI
+    const newTotalInterest = (emiAmount * newMonths) - this.loanData.amount;
+    
+    // Interest saved is the difference
+    const interestSaved = originalTotalInterest - newTotalInterest;
+    
+    interestSavedValue.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
     
     // Update subtext to provide context
     const timeSubtext = document.querySelector('#same-emi .metric:nth-child(2) .metric-subtext');
