@@ -18,10 +18,13 @@ class ExtraPaymentManager {
     };
     
     // Get DOM elements
-    this.extraPaymentSlider = this.container.getElementById('extraPaymentSlider');
-    this.extraPaymentValue = this.container.querySelector('#extra-payment .slider-value');
-    this.frequencySelect = this.container.getElementById('frequencySelect');
-    this.extraPaymentPresetButtons = this.container.querySelectorAll('#extra-payment .preset-button');
+    const containerElement = typeof this.container === 'string' ? 
+  document.querySelector(this.container) : this.container;
+  
+this.extraPaymentSlider = document.getElementById('extraPaymentSlider');
+this.extraPaymentValue = containerElement.querySelector('#extra-payment .slider-value');
+this.frequencySelect = document.getElementById('frequencySelect');
+this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payment .preset-button');
     
     // Set default extra payment to 10% of EMI
     this.defaultExtraPayment = Math.round(this.loanData.currentEMI * 0.1);
@@ -85,14 +88,42 @@ class ExtraPaymentManager {
         } else {
           button.textContent = `₹${this.formatCurrency(value)}`;
         }
-        
-        // Add click handler
-        button.addEventListener('click', () => {
-          this.extraPaymentSlider.value = Math.min(value, this.extraPaymentSlider.max);
-          this.updateExtraPaymentImpact();
-        });
       }
+      
+      // Remove any existing click handlers
+      button.replaceWith(button.cloneNode(true));
     });
+    
+    // Get the updated button references
+    this.extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
+    
+    // Add click handlers to the new buttons
+    this.extraPaymentPresetButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active class from all buttons
+        this.extraPaymentPresetButtons.forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        button.classList.add('active');
+        
+        // Get value and update slider
+        const value = parseInt(button.getAttribute('data-value'));
+        this.extraPaymentSlider.value = value;
+        
+        // Update displayed value
+        if (this.extraPaymentValue) {
+          this.extraPaymentValue.textContent = `₹${this.formatCurrency(value)}`;
+        }
+        
+        // Update calculations
+        this.updateExtraPaymentImpact();
+      });
+    });
+    
+    // Set the first button as active by default
+    if (this.extraPaymentPresetButtons.length > 0) {
+      this.extraPaymentPresetButtons[0].classList.add('active');
+    }
   }
   
   /**

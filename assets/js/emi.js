@@ -18,9 +18,14 @@ class EMIManager {
     };
     
     // Get DOM elements
-    this.emiSlider = this.container.getElementById('emiSlider');
-    this.emiValue = this.container.querySelector('#same-emi .slider-value');
-    this.emiPresetButtons = this.container.querySelectorAll('#same-emi .preset-button');
+   // Use document as fallback if container is not valid
+this.containerElement = typeof this.container === 'string' ? 
+document.querySelector(this.container) : 
+(this.container || document);
+  
+this.emiSlider = document.getElementById('emiSlider');
+this.emiValue = containerElement.querySelector('#same-emi .slider-value');
+this.emiPresetButtons = containerElement.querySelectorAll('#same-emi .preset-button');
     
     // Initialize
     this.initSlider();
@@ -58,7 +63,32 @@ class EMIManager {
     }
     
     // Add event listener
-    this.emiSlider.addEventListener('input', () => this.updateEMIImpact());
+    // Add event listener
+this.emiSlider.addEventListener('input', () => {
+  // Remove active class from all preset buttons when slider is manually moved
+  this.emiPresetButtons.forEach(btn => btn.classList.remove('active'));
+  
+  // Find the closest preset button to current value
+  const currentValue = parseInt(this.emiSlider.value);
+  let closestButton = null;
+  let closestDiff = Number.MAX_SAFE_INTEGER;
+  
+  this.emiPresetButtons.forEach(btn => {
+    const btnValue = parseInt(btn.getAttribute('data-value'));
+    const diff = Math.abs(btnValue - currentValue);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closestButton = btn;
+    }
+  });
+  
+  // If exact match, highlight that button
+  if (closestDiff === 0 && closestButton) {
+    closestButton.classList.add('active');
+  }
+  
+  this.updateEMIImpact();
+});
   }
   
   /**
@@ -78,12 +108,40 @@ class EMIManager {
         button.textContent = `${ratio}x EMI`;
       }
       
-      // Add click handler
+      // Remove any existing click handlers
+      button.replaceWith(button.cloneNode(true));
+    });
+    
+    // Get the updated button references
+    this.emiPresetButtons = document.querySelectorAll('#same-emi .preset-button');
+    
+    // Add click handler to the new buttons
+    this.emiPresetButtons.forEach(button => {
       button.addEventListener('click', () => {
+        // Remove active class from all buttons
+        this.emiPresetButtons.forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        button.classList.add('active');
+        
+        // Get value and update slider
+        const value = parseInt(button.getAttribute('data-value'));
         this.emiSlider.value = value;
+        
+        // Update displayed value
+        if (this.emiValue) {
+          this.emiValue.textContent = `₹${this.formatCurrency(value)}`;
+        }
+        
+        // Update calculations
         this.updateEMIImpact();
       });
     });
+    
+    // Set the first button as active by default
+    if (this.emiPresetButtons.length > 0) {
+      this.emiPresetButtons[0].classList.add('active');
+    }
   }
   
   /**
@@ -133,9 +191,12 @@ class EMIManager {
     }
     
     // Get DOM elements for metrics
-    const newTenureElement = document.querySelector('#same-emi .metric:nth-child(1) .metric-value');
-    const timeSavedElement = document.querySelector('#same-emi .metric:nth-child(2) .metric-value');
-    const interestSavedElement = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
+    const containerElement = typeof this.container === 'string' ? 
+  document.querySelector(this.container) : this.container;
+  
+const newTenureElement = containerElement.querySelector('#same-emi .metric:nth-child(1) .metric-value');
+const timeSavedElement = containerElement.querySelector('#same-emi .metric:nth-child(2) .metric-value');
+const interestSavedElement = containerElement.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
     
     if (!newTenureElement || !timeSavedElement || !interestSavedElement) return;
     

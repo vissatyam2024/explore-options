@@ -20,7 +20,7 @@ class TabManager {
    */
   initTabs() {
     this.tabs.forEach((tab, index) => {
-      ttab.addEventListener('click', () => {
+      tab.addEventListener('click', () => {
         console.log('Tab clicked:', tab);
         this.switchTab(tabId, index);
         
