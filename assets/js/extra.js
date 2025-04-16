@@ -1,33 +1,22 @@
 /**
- * Extra Payment Scenario manager for the Explore Options component
- * Handles calculations for extra payments with dynamic loan data
- */
+  * Extra Payment Scenario manager for the Explore Options component
+  */
 class ExtraPaymentManager {
   constructor(config = {}) {
-    this.container = config.container || document;
-    this.calculationHelper = config.calculationHelper;
-    
-    // Store loan data reference - passed from main component
+    // Default loan parameters
     this.loanData = config.loanData || {
-      amount: 10000000,
-      currentRate: 9,
-      newRate: 8.1,
-      currentEMI: 89973,
-      newEMI: 84267,
+      amount: 10000000,        // Principal amount (₹1 crore)
+      currentRate: 9,          // Current interest rate (9%)
+      newRate: 8.1,            // New interest rate (8.1%)
+      currentEMI: 89973,       // Current EMI amount
       tenure: 240 // months
     };
     
     // Get DOM elements
-    const containerElement = typeof this.container === 'string' ? 
-  document.querySelector(this.container) : this.container;
-  
-this.extraPaymentSlider = document.getElementById('extraPaymentSlider');
-this.extraPaymentValue = containerElement.querySelector('#extra-payment .slider-value');
-this.frequencySelect = document.getElementById('frequencySelect');
-this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payment .preset-button');
-    
-    // Set default extra payment to 10% of EMI
-    this.defaultExtraPayment = Math.round(this.loanData.currentEMI * 0.1);
+    this.extraPaymentSlider = document.getElementById('extraPaymentSlider');
+    this.extraPaymentValue = document.querySelector('#extra-payment .slider-value');
+    this.frequencySelect = document.getElementById('frequencySelect');
+    this.extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
     
     // Initialize
     this.initSlider();
@@ -44,22 +33,17 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
     
     // Set slider range
     this.extraPaymentSlider.min = 0;
-    this.extraPaymentSlider.max = 500000; // Fixed at 5,00,000 as requested
-    this.extraPaymentSlider.value = this.defaultExtraPayment;
-    this.extraPaymentSlider.step = 1000; // Step by 1,000
+    this.extraPaymentSlider.max = 500000; // Up to 5 lacs
+    this.extraPaymentSlider.value = 0; // Default value
+    this.extraPaymentSlider.step = 1000; // Step by 1000
     
     // Update slider range labels
-    const sliderRange = this.container.querySelector('#extra-payment .slider-range');
+    const sliderRange = document.querySelector('#extra-payment .slider-range');
     if (sliderRange) {
       sliderRange.innerHTML = `
         <span>₹0</span>
-        <span>₹5,00,000</span>
+        <span>₹${this.formatCurrency(500000)}</span>
       `;
-    }
-    
-    // Set initial value display
-    if (this.extraPaymentValue) {
-      this.extraPaymentValue.textContent = `₹${this.formatCurrency(this.defaultExtraPayment)}`;
     }
     
     // Add event listener
@@ -67,63 +51,25 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
   }
   
   /**
-   * Initialize preset buttons with fixed values as requested
+   * Initialize preset buttons
    */
   initPresetButtons() {
-    // Use the fixed preset amounts requested
-    const presetAmounts = [10000, 20000, 50000, 100000, 200000];
+    // Set preset amounts
+    const presetAmounts = [10000, 50000, 100000, 200000];
     
     this.extraPaymentPresetButtons.forEach((button, index) => {
       if (index < presetAmounts.length) {
         const value = presetAmounts[index];
         button.setAttribute('data-value', value);
+        button.textContent = `₹${this.formatCurrency(value)}`;
         
-        // Format button text with proper Indian currency format
-        if (value >= 100000) {
-          const lakhValue = value / 100000;
-          button.textContent = `₹${lakhValue}L`;
-        } else if (value >= 1000) {
-          const kValue = value / 1000;
-          button.textContent = `₹${kValue}k`;
-        } else {
-          button.textContent = `₹${this.formatCurrency(value)}`;
-        }
+        // Add click handler
+        button.addEventListener('click', () => {
+          this.extraPaymentSlider.value = value;
+          this.updateExtraPaymentImpact();
+        });
       }
-      
-      // Remove any existing click handlers
-      button.replaceWith(button.cloneNode(true));
     });
-    
-    // Get the updated button references
-    this.extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
-    
-    // Add click handlers to the new buttons
-    this.extraPaymentPresetButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        // Remove active class from all buttons
-        this.extraPaymentPresetButtons.forEach(btn => btn.classList.remove('active'));
-        
-        // Add active class to clicked button
-        button.classList.add('active');
-        
-        // Get value and update slider
-        const value = parseInt(button.getAttribute('data-value'));
-        this.extraPaymentSlider.value = value;
-        
-        // Update displayed value
-        if (this.extraPaymentValue) {
-          this.extraPaymentValue.textContent = `₹${this.formatCurrency(value)}`;
-        }
-        
-        // Update calculations
-        this.updateExtraPaymentImpact();
-      });
-    });
-    
-    // Set the first button as active by default
-    if (this.extraPaymentPresetButtons.length > 0) {
-      this.extraPaymentPresetButtons[0].classList.add('active');
-    }
   }
   
   /**
@@ -145,7 +91,7 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
   }
   
   /**
-   * Update calculations based on current extra payment and frequency
+   * Update calculations based on current slider value and frequency
    */
   updateExtraPaymentImpact() {
     if (!this.extraPaymentSlider || !this.frequencySelect) return;
@@ -154,98 +100,54 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
     const frequency = this.frequencySelect.value;
     
     // Format the displayed amount with commas
-    if (this.extraPaymentValue) {
-      this.extraPaymentValue.textContent = `₹${this.formatCurrency(extraAmount)}`;
-    }
+    this.extraPaymentValue.textContent = `₹${this.formatCurrency(extraAmount)}`;
     
     // Apply frequency factor
     let frequencyFactor = 1;
-    let frequencyText = '';
-    
     switch(frequency) {
-      case 'monthly':
-        frequencyFactor = 1;
-        frequencyText = 'monthly';
-        break;
-      case 'quarterly':
-        frequencyFactor = 1/3;
-        frequencyText = 'quarterly';
-        break;
-      case 'half-yearly':
-        frequencyFactor = 1/6;
-        frequencyText = 'half-yearly';
-        break;
-      case 'yearly':
-        frequencyFactor = 1/12;
-        frequencyText = 'yearly';
-        break;
+      case 'monthly': frequencyFactor = 1; break;
+      case 'quarterly': frequencyFactor = 1/3; break;
+      case 'half-yearly': frequencyFactor = 1/6; break;
+      case 'yearly': frequencyFactor = 1/12; break;
     }
     
-    // Get DOM elements for metrics
-    const newTenureElement = this.container.querySelector('#extra-payment .metric:nth-child(1) .metric-value');
-    const interestSavedElement = this.container.querySelector('#extra-payment .metric:nth-child(2) .metric-value');
+    // Calculate effective monthly extra payment
+    const effectiveMonthly = extraAmount * frequencyFactor;
     
-    if (!newTenureElement || !interestSavedElement) return;
+    // Update metrics based on effective monthly payment
+    const newTenure = document.querySelector('#extra-payment .metric:nth-child(1) .metric-value');
+    const interestSaved = document.querySelector('#extra-payment .metric:nth-child(2) .metric-value');
     
-    // Calculate baseline tenure at new rate (after refinancing)
-    const baselineTenure = this.calculationHelper.calculateTenureWithExtraPayment(
-      this.loanData.amount, 
-      this.loanData.newRate, 
-      this.loanData.newEMI,
-      0, 
-      1
-    );
+    // Calculate impact on tenure
+    // This is a simplified calculation - in real app would use more complex formula
+    const totalMonthlyPayment = this.loanData.newEMI + effectiveMonthly;
+    const paymentRatio = totalMonthlyPayment / this.loanData.newEMI;
+    const newMonths = Math.max(1, Math.round(this.loanData.tenure / paymentRatio));
+    const monthsSaved = this.loanData.tenure - newMonths;
+    const interestSavingsAmount = Math.round(monthsSaved * this.loanData.newEMI);
     
-    // Calculate new tenure with extra payments
-    const newTenure = this.calculationHelper.calculateTenureWithExtraPayment(
-      this.loanData.amount, 
-      this.loanData.newRate, 
-      this.loanData.newEMI,
-      extraAmount, 
-      frequencyFactor
-    );
+    newTenure.textContent = `${newMonths} months`;
+    interestSaved.textContent = `₹${this.formatCurrency(interestSavingsAmount)}`;
     
-    // Calculate baseline total interest (at new rate without extra payments)
-    const baselineInterest = (this.loanData.newEMI * baselineTenure) - this.loanData.amount;
+    // Update subtext
+    const tenureSubtext = document.querySelector('#extra-payment .metric:nth-child(1) .metric-subtext');
+    tenureSubtext.textContent = `was ${this.loanData.tenure} months`;
     
-    // Calculate new total interest with extra payments
-    const effectiveExtraPayment = extraAmount * frequencyFactor;
-    const totalPaid = (this.loanData.newEMI * newTenure) + (effectiveExtraPayment * newTenure);
-    const newTotalInterest = totalPaid - this.loanData.amount;
+    const savingsSubtext = document.querySelector('#extra-payment .metric:nth-child(2) .metric-subtext');
     
-    // Calculate interest savings
-    const interestSaved = Math.max(0, baselineInterest - newTotalInterest);
-    
-    // Calculate months saved
-    const monthsSaved = Math.max(0, baselineTenure - newTenure);
-    
-    // Update UI elements
-    newTenureElement.textContent = `${newTenure} months`;
-    interestSavedElement.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
-    
-    // Update subtexts
-    const tenureSubtext = this.container.querySelector('#extra-payment .metric:nth-child(1) .metric-subtext');
-    if (tenureSubtext) {
-      if (monthsSaved > 0) {
-        tenureSubtext.textContent = `save ${monthsSaved} months`;
-      } else {
-        tenureSubtext.textContent = `same as without extra`;
-      }
-    }
-    
-    const savingsSubtext = this.container.querySelector('#extra-payment .metric:nth-child(2) .metric-subtext');
-    if (savingsSubtext) {
-      savingsSubtext.textContent = `with ${frequencyText} extra payments`;
+    if (frequency === 'monthly') {
+      savingsSubtext.textContent = 'with monthly extra payments';
+    } else {
+      savingsSubtext.textContent = `with ${frequency} extra payments`;
     }
     
     return {
       extraAmount: extraAmount,
       frequency: frequency,
-      frequencyFactor: frequencyFactor,
-      newTenure: newTenure,
-      baselineTenure: baselineTenure,
+      effectiveMonthly: effectiveMonthly,
+      newTenure: newMonths,
       monthsSaved: monthsSaved,
-      interestSaved: interestSaved
+      interestSaved: interestSavingsAmount
     };
   }
   
@@ -272,7 +174,7 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
    */
   setExtraPayment(amount) {
     if (this.extraPaymentSlider) {
-      this.extraPaymentSlider.value = Math.min(amount, this.extraPaymentSlider.max);
+      this.extraPaymentSlider.value = amount;
       this.updateExtraPaymentImpact();
     }
   }
@@ -286,17 +188,5 @@ this.extraPaymentPresetButtons = containerElement.querySelectorAll('#extra-payme
       this.frequencySelect.value = frequency;
       this.updateExtraPaymentImpact();
     }
-  }
-  
-  /**
-   * Update loan data reference
-   * @param {Object} loanData - New loan data
-   */
-  updateLoanData(loanData) {
-    this.loanData = loanData;
-    this.defaultExtraPayment = Math.round(this.loanData.currentEMI * 0.1);
-    this.initSlider();
-    this.initPresetButtons();
-    this.updateExtraPaymentImpact();
   }
 }
