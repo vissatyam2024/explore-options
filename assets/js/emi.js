@@ -5,11 +5,11 @@ class EMIManager {
   constructor(config = {}) {
     // Default loan parameters
     this.loanData = config.loanData || {
-      amount: 10000000,        // Principal amount (₹1 crore)
-      currentRate: 9,          // Current interest rate (9%)
-      newRate: 8.1,            // New interest rate (8.1%)
-      currentEMI: 89973,       // Current EMI amount
-      tenure: 240 / months
+      amount: 10000000,      // Principal amount (₹1 crore)
+      currentRate: 9,        // Current interest rate (9%)
+      newRate: 8.1,          // New interest rate (8.1%)
+      currentEMI: 89973,     // Current EMI amount
+      tenure: 240            // months (fix the syntax error here)
     };
     
     // Get DOM elements
@@ -20,7 +20,7 @@ class EMIManager {
     // Initialize
     this.initSlider();
     this.initPresetButtons();
-    this.updateEMIImpact(); // Initialize calculations
+    this.updateEMIImpact(); // Initialize calculations with the default EMI value
   }
   
   /**
@@ -75,6 +75,8 @@ class EMIManager {
   /**
    * Update calculations based on current slider value
    */
+  // In the EMIManager.js file, update the updateEMIImpact() method:
+
   updateEMIImpact() {
     if (!this.emiSlider) return;
     
@@ -83,37 +85,83 @@ class EMIManager {
     // Format with commas
     this.emiValue.textContent = `₹${this.formatCurrency(emiAmount)}`;
     
-    // Update metrics based on slider
+    // Calculate new tenure based on EMI and NEW interest rate
+    const monthlyRate = this.loanData.newRate / 12 / 100;
+    
+    // Calculate new tenure with new interest rate but same EMI
+    const newMonths = Math.ceil(-Math.log(1 - (this.loanData.amount * monthlyRate / emiAmount)) / Math.log(1 + monthlyRate));
+    
+    // Calculate months saved
+    const savedMonths = this.loanData.tenure - newMonths;
+    
+    // Update tenure metrics
     const newTenure = document.querySelector('#same-emi .metric:nth-child(1) .metric-value');
     const timeSaved = document.querySelector('#same-emi .metric:nth-child(2) .metric-value');
-    
-    // Calculate new tenure based on EMI increase
-    const emiRatio = emiAmount / this.loanData.currentEMI;
-    const newMonths = Math.max(1, Math.round(this.loanData.tenure / emiRatio));
-    const savedMonths = this.loanData.tenure - newMonths;
+
     
     newTenure.textContent = `${newMonths} months`;
     timeSaved.textContent = `${savedMonths} months`;
+
+    // IMPROVED INTEREST SAVINGS CALCULATION
+    // Original total payment = original EMI × original tenure
+    const originalTotalPayment = this.loanData.currentEMI * this.loanData.tenure;
+    // Original total interest paid = total payment - principal
+    const originalInterestPaid = originalTotalPayment - this.loanData.amount;
     
-    // Update interest saved based on time saved
-    const interestSavedValue = document.querySelector('#same-emi .metric-row:nth-child(3) .metric-value');
-    const interestSaved = Math.round(savedMonths * this.loanData.newEMI);
-    interestSavedValue.textContent = `₹${this.formatCurrency(interestSaved)}`;
+    // New total payment = same EMI × new tenure
+    const newTotalPayment = emiAmount * newMonths;
+    const newInterestPaid = newTotalPayment - this.loanData.amount;
+
+    // Interest saved is the difference in total payments
+    const interestSaved = originalInterestPaid - newInterestPaid;
+    const totalinterestsaved = document.querySelector('#insterestSaved .metric:nth-child(1) .metric-value');
+    totalinterestsaved.textContent = `₹${interestSaved}`;
+
+  
+    // Update interest saved display
+    const interestSavedValue = document.querySelector('#same-emi .metric-row:nth-child(1) .metric .metric-value');
+    if (interestSavedValue) {
+      interestSavedValue.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
+      // Add the positive CSS class if it's not already there
+      interestSavedValue.classList.add('value-positive');
+    } else {
+      console.error('Interest saved element not found');
+    }
     
     // Update subtext to provide context
     const timeSubtext = document.querySelector('#same-emi .metric:nth-child(2) .metric-subtext');
-    if (savedMonths === 0) {
-      timeSubtext.textContent = 'adjust EMI to see impact';
+    if (savedMonths <= 0) {
+      timeSubtext.textContent = 'adjust EMI to see more impact';
     } else {
       const percentSaved = Math.round((savedMonths / this.loanData.tenure) * 100);
       timeSubtext.textContent = `${percentSaved}% faster payoff`;
     }
     
+    // // Update tenure subtext
+    const tenureSubtext = document.querySelector('#same-emi .metric:nth-child(1) .metric-subtext');
+    tenureSubtext.textContent = `vs ${this.loanData.tenure} months (Original Tenure)`;
+    
+    // Update interest saved subtext
+    const interestSubtext = document.querySelector('#insterestSaved .metric:nth-child(1) .metric-subtext');
+    if (interestSubtext) {
+      interestSubtext.textContent = `vs Original Loan`;
+    }
+    
+    // Add console logging to help debug
+    console.log('EMI Impact Calculation:', {
+      emiAmount,
+      newMonths,
+      savedMonths,
+      originalTotalPayment,
+      newTotalPayment,
+      interestSaved
+    });
+    
     return {
       emi: emiAmount,
       newTenure: newMonths,
       timeSaved: savedMonths,
-      interestSaved: interestSaved
+      interestSaved: Math.round(interestSaved)
     };
   }
   

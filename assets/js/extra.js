@@ -35,7 +35,7 @@ class ExtraPaymentManager {
     this.extraPaymentSlider.min = 0;
     this.extraPaymentSlider.max = 500000; // Up to 5 lacs
     this.extraPaymentSlider.value = 0; // Default value
-    this.extraPaymentSlider.step = 1000; // Step by 1000
+    this.extraPaymentSlider.step = 5000; // Step by 1000
     
     // Update slider range labels
     const sliderRange = document.querySelector('#extra-payment .slider-range');
@@ -122,7 +122,8 @@ class ExtraPaymentManager {
     // This is a simplified calculation - in real app would use more complex formula
     const totalMonthlyPayment = this.loanData.newEMI + effectiveMonthly;
     const paymentRatio = totalMonthlyPayment / this.loanData.newEMI;
-    const newMonths = Math.max(1, Math.round(this.loanData.tenure / paymentRatio));
+    const newMonths =  paymentRatio
+    Math.round(this.loanData.tenure / paymentRatio);
     const monthsSaved = this.loanData.tenure - newMonths;
     const interestSavingsAmount = Math.round(monthsSaved * this.loanData.newEMI);
     
@@ -135,11 +136,11 @@ class ExtraPaymentManager {
     
     const savingsSubtext = document.querySelector('#extra-payment .metric:nth-child(2) .metric-subtext');
     
-    if (frequency === 'monthly') {
-      savingsSubtext.textContent = 'with monthly extra payments';
-    } else {
+    // if (frequency === 'monthly') {
+    //   savingsSubtext.textContent = 'with monthly extra payments';
+    // } else {
       savingsSubtext.textContent = `with ${frequency} extra payments`;
-    }
+    // }
     
     return {
       extraAmount: extraAmount,
