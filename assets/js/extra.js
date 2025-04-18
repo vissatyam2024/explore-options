@@ -40,7 +40,7 @@ class ExtraPaymentManager {
     this.extraPaymentSlider.min = 0;
     this.extraPaymentSlider.max = 500000; // Up to 5 lacs
     this.extraPaymentSlider.value = 0; // Default value
-    this.extraPaymentSlider.step = 1000; // Step by 1000
+    this.extraPaymentSlider.step = 5000; // Step by 1000
     
     // Update slider range labels
     const sliderRange = document.querySelector('#extra-payment .slider-range');

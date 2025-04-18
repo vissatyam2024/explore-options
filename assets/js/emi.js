@@ -33,6 +33,8 @@ class EMIManager {
     this.emiSlider.min = this.loanData.currentEMI;
     this.emiSlider.max = this.loanData.currentEMI * 3; // Up to 3x current EMI
     this.emiSlider.value = this.loanData.currentEMI;
+    // this.emiSlider.step = 1000; // Step by 1000
+
     
     // Update slider range labels
     const sliderRange = document.querySelector('#same-emi .slider-range');
@@ -45,6 +47,7 @@ class EMIManager {
     
     // Add event listener
     this.emiSlider.addEventListener('input', () => this.updateEMIImpact());
+
   }
   
   /**
@@ -68,7 +71,11 @@ class EMIManager {
       button.addEventListener('click', () => {
         this.emiSlider.value = value;
         this.updateEMIImpact();
+        this.emiPresetButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
       });
+                
+
     });
   }
   
@@ -139,7 +146,7 @@ class EMIManager {
     
     // // Update tenure subtext
     const tenureSubtext = document.querySelector('#same-emi .metric:nth-child(1) .metric-subtext');
-    tenureSubtext.textContent = `vs ${this.loanData.tenure} months (Original Tenure)`;
+    tenureSubtext.textContent = `vs ${this.loanData.tenure} months (Left Term)`;
     
     // Update interest saved subtext
     const interestSubtext = document.querySelector('#insterestSaved .metric:nth-child(1) .metric-subtext');

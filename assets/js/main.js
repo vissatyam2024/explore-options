@@ -1,3 +1,4 @@
+// Make available globally
 /**
   * Explore Options - Main Component
   * A standalone component for exploring loan scenarios
@@ -26,6 +27,8 @@ class ExploreOptions {
     // Set up callbacks
     this.setupCallbacks();
   }
+
+  
   
   /**
    * Initialize the tab, EMI and extra payment managers
@@ -45,6 +48,11 @@ class ExploreOptions {
     this.extraPaymentManager = new ExtraPaymentManager({
       loanData: this.config.loanData
     });
+    
+    this.sameTenureManager = new SameTenureManager({
+      loanData: this.config.loanData
+    });
+
   }
   
   /**
@@ -75,22 +83,20 @@ class ExploreOptions {
     };
     
     // Get scenario-specific data
-    switch (tabId) {
-      case 'same-tenure':
-        scenarioData.savings = {
-          monthlyEMI: this.config.loanData.currentEMI - this.config.loanData.newEMI,
-          totalInterest: (this.config.loanData.currentEMI - this.config.loanData.newEMI) * this.config.loanData.tenure
-        };
-        break;
-        
-      case 'same-emi':
-        scenarioData.emiScenario = this.emiManager.getCurrentScenario();
-        break;
-        
-      case 'extra-payment':
-        scenarioData.extraPaymentScenario = this.extraPaymentManager.getCurrentScenario();
-        break;
-    }
+
+      switch (tabId) {
+        case 'same-tenure':
+          scenarioData.sameTenureScenario = this.sameTenureManager.getCurrentScenario();
+          break;
+          
+        case 'same-emi':
+          scenarioData.emiScenario = this.emiManager.getCurrentScenario();
+          break;
+          
+        case 'extra-payment':
+          scenarioData.extraPaymentScenario = this.extraPaymentManager.getCurrentScenario();
+          break;
+      }
     
     // Call the callback
     if (typeof this.config.onScenarioChange === 'function') {
@@ -99,18 +105,20 @@ class ExploreOptions {
   }
   
   /**
-   * Update the loan data
-   * @param {Object} loanData - New loan data
-   */
-  updateLoanData(loanData) {
-    this.config.loanData = { ...this.config.loanData, ...loanData };
-    
-    // Refresh managers with new data
-    this.initializeManagers();
-    
-    // Re-trigger scenario change
-    this.handleTabChange(this.tabManager.getActiveTab());
-  }
+ * Update the loan data
+ * @param {Object} loanData - New loan data
+ */
+updateLoanData(loanData) {
+  this.config.loanData = { ...this.config.loanData, ...loanData };
+  
+// Refresh managers with new data
+this.emiManager.updateLoanData(this.config.loanData);
+this.extraPaymentManager.updateLoanData(this.config.loanData);
+this.sameTenureManager.updateLoanData(this.config.loanData);
+  
+  // Re-trigger scenario change
+  this.handleTabChange(this.tabManager.getActiveTab());
+}
   
   /**
    * Switch to a specific tab
@@ -131,4 +139,5 @@ class ExploreOptions {
 }
 
 // Make available globally
-window.ExploreOptions = ExploreOptions;
+ window.ExploreOptions = ExploreOptions;
+

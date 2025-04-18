@@ -1,8 +1,9 @@
 /**
   * Same Tenure Scenario manager for the Explore Options component
   */
-class tenure {
+class sameTenureManager {
   constructor(config = {}) {
+    // console.log("SameTenureManager initialized with data:", config.loanData);
     // Default loan parameters
     this.loanData = config.loanData || {
       amount: 10000000,        // Principal amount (₹1 crore)
@@ -43,13 +44,17 @@ class tenure {
    * Update all calculations for the Same Tenure tab
    */
   updateCalculations() {
+    // console.log("SameTenureManager.updateCalculations called with data:", this.loanData);
+
     // Calculate new EMI with new interest rate
     const newEMI = this.calculateEMI(
       this.loanData.amount,
       this.loanData.newRate,
       this.loanData.tenure
     );
-    
+    // console.log("Calculated new EMI:", newEMI);
+
+
     // Calculate monthly savings
     const monthlySavings = this.loanData.currentEMI - newEMI;
     
@@ -76,7 +81,7 @@ class tenure {
     
     // Update subtexts
     if (this.newEMISubtext) {
-      this.newEMISubtext.textContent = `ws ₹${this.formatCurrency(this.loanData.currentEMI)}`;
+      this.newEMISubtext.textContent = `was ₹${this.formatCurrency(this.loanData.currentEMI)}`;
     }
     
     if (this.monthlySavingsSubtext) {
