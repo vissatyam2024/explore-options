@@ -81,20 +81,20 @@
          <div class="metric-row">
            <div class="metric">
              <div class="metric-label">New EMI</div>
-             <div class="metric-value">₹1,086</div>
+             <div class="metric-value">₹1,086</div> <!-- To edit check tenure tab -->
              <div class="metric-subtext">was </div>
            </div>
            <div class="metric">
              <div class="metric-label">Monthly Savings</div>
-             <div class="metric-value value-positive">₹914</div>
+             <div class="metric-value value-positive">₹914</div> <!-- To edit check tenure tab -->
              <div class="metric-subtext">45.7% less</div>
            </div>
          </div>
          
-         <div class="metric-row">
+         <div id="same-tenure2" class="metric-row">
            <div class="metric">
              <div class="metric-label">Total Interest Saved</div>
-             <div class="metric-value value-positive">₹10,968</div>
+             <div class="metric-value value-positive">₹10,968</div> <!-- To edit check tenure tab -->
              <div class="metric-subtext">over loan term</div>
            </div>
          </div>
@@ -124,12 +124,12 @@
          <div class="metric-row">
            <div class="metric">
              <div class="metric-label">New Tenure</div>
-             <div class="metric-value">12 months</div>
+             <div class="metric-value">00</div> <!-- To edit check emi tab -->
              <div class="metric-subtext">with lower interest rate</div>
            </div>
            <div class="metric">
              <div class="metric-label">Time Saved</div>
-             <div class="metric-value value-positive">0 months</div>
+             <div class="metric-value value-positive">0 months</div><!-- To edit check emi tab -->
              <div class="metric-subtext">adjust EMI to see impact</div>
            </div>
          </div>
@@ -143,50 +143,65 @@
          </div>
        </div>
        
-       <!-- Extra Payment Scenario Content -->
-       <div id="extra-payment" class="scenario-content">
-         <div class="preset-buttons">
-           <div class="preset-button" data-value="10000">₹10,000</div>
-           <div class="preset-button" data-value="50000">₹50,000</div>
-           <div class="preset-button" data-value="100000">₹1,00,000</div>
-           <div class="preset-button" data-value="200000">₹2,00,000</div>
-         </div>
-         
-         <div class="input-row">
-           <div class="slider-container" style="flex: 1;">
-             <div class="slider-label">
-               <div class="slider-title">Extra payment</div>
-               <div class="slider-value">₹0</div>
-             </div>
-             <input type="range" min="0" max="500000" value="0" step="1000" class="slider" id="extraPaymentSlider">
-             <div class="slider-range">
-               <span>₹0</span>
-               <span>₹5,00,000</span>
-             </div>
-           </div>
-           <div class="select-container">
-             <select id="frequencySelect" class="frequency-select">
-               <option value="monthly">Monthly</option>
-               <option value="quarterly">Quarterly</option>
-               <option value="half-yearly">Half Yearly</option>
-               <option value="yearly">Yearly</option>
-             </select>
-           </div>
-         </div>
-         
-         <div class="metric-row">
-           <div class="metric">
-             <div class="metric-label">New Tenure</div>
-             <div class="metric-value">7 months</div>
-             <div class="metric-subtext">was 12 months</div>
-           </div>
-           <div class="metric">
-             <div class="metric-label">Interest Saved</div>
-             <div class="metric-value value-positive">₹6,240</div>
-             <div class="metric-subtext">with extra payments</div>
-           </div>
-         </div>
-       </div>
+       <!-- Extra Payment Scenario Content with Toggle -->
+<div id="extra-payment" class="scenario-content">
+  <!-- Comparison Mode Toggle -->
+  <div class="comparison-toggle" id="compare-toggle">
+    <div class="toggle-label">Apply extra payments to:</div>
+    <div class="toggle-options">
+      <label class="radio-label">
+        <input type="radio" name="comparison" value="refinanced" checked>
+        <span class="radio-text">Optimized Loan (8.1%)</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="comparison" value="original">
+        <span class="radio-text">Original Loan (9%)</span>
+      </label>
+    </div>
+  </div>
+  
+  <div class="preset-buttons">
+    <div class="preset-button" data-value="10000">₹10,000</div>
+    <div class="preset-button" data-value="50000">₹50,000</div>
+    <div class="preset-button" data-value="100000">₹1,00,000</div>
+    <div class="preset-button" data-value="200000">₹2,00,000</div>
+  </div>
+  
+  <div class="input-row">
+    <div class="slider-container" style="flex: 1;">
+      <div class="slider-label">
+        <div class="slider-title">Extra payment</div>
+        <div class="slider-value">₹0</div>
+      </div>
+      <input type="range" min="0" max="500000" value="0" step="1000" class="slider" id="extraPaymentSlider">
+      <div class="slider-range">
+        <span>₹0</span>
+        <span>₹5,00,000</span>
+      </div>
+    </div>
+    <div class="select-container">
+      <select id="frequencySelect" class="frequency-select">
+        <option value="monthly">Monthly</option>
+        <option value="quarterly">Quarterly</option>
+        <option value="half-yearly">Half Yearly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-label">New Tenure</div>
+      <div class="metric-value">240 months</div>
+      <div class="metric-subtext">was 240 months</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Interest Saved</div>
+      <div class="metric-value value-positive">₹0</div>
+      <div class="metric-subtext">with extra payments</div>
+    </div>
+  </div>
+</div>
      </div>
      
      <!-- Demo Controls 

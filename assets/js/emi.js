@@ -115,7 +115,7 @@ class EMIManager {
     // Interest saved is the difference in total payments
     const interestSaved = originalInterestPaid - newInterestPaid;
     const totalinterestsaved = document.querySelector('#insterestSaved .metric:nth-child(1) .metric-value');
-    totalinterestsaved.textContent = `₹${interestSaved}`;
+    totalinterestsaved.textContent = `₹${this.formatCurrency(Math.round(interestSaved))}`;
 
   
     // Update interest saved display

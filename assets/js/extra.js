@@ -17,11 +17,16 @@ class ExtraPaymentManager {
     this.extraPaymentValue = document.querySelector('#extra-payment .slider-value');
     this.frequencySelect = document.getElementById('frequencySelect');
     this.extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
+    this.comparisonToggle = document.querySelectorAll('#compare-toggle input[type="radio"]');
+    
+    // Set default comparison mode
+    this.comparisonMode = 'refinanced'; // 'refinanced' or 'original'
     
     // Initialize
     this.initSlider();
     this.initPresetButtons();
     this.initFrequencySelect();
+    this.initComparisonToggle();
     this.updateExtraPaymentImpact(); // Initialize calculations
   }
   
@@ -35,7 +40,7 @@ class ExtraPaymentManager {
     this.extraPaymentSlider.min = 0;
     this.extraPaymentSlider.max = 500000; // Up to 5 lacs
     this.extraPaymentSlider.value = 0; // Default value
-    this.extraPaymentSlider.step = 5000; // Step by 1000
+    this.extraPaymentSlider.step = 1000; // Step by 1000
     
     // Update slider range labels
     const sliderRange = document.querySelector('#extra-payment .slider-range');
@@ -67,6 +72,10 @@ class ExtraPaymentManager {
         button.addEventListener('click', () => {
           this.extraPaymentSlider.value = value;
           this.updateExtraPaymentImpact();
+          
+          // Add active class to selected button
+          this.extraPaymentPresetButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
         });
       }
     });
@@ -91,7 +100,21 @@ class ExtraPaymentManager {
   }
   
   /**
-   * Update calculations based on current slider value and frequency
+   * Initialize comparison toggle
+   */
+  initComparisonToggle() {
+    if (!this.comparisonToggle) return;
+    
+    this.comparisonToggle.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.comparisonMode = e.target.value;
+        this.updateExtraPaymentImpact();
+      });
+    });
+  }
+  
+  /**
+   * Update calculations based on current slider value, frequency, and comparison mode
    */
   updateExtraPaymentImpact() {
     if (!this.extraPaymentSlider || !this.frequencySelect) return;
@@ -114,41 +137,131 @@ class ExtraPaymentManager {
     // Calculate effective monthly extra payment
     const effectiveMonthly = extraAmount * frequencyFactor;
     
-    // Update metrics based on effective monthly payment
-    const newTenure = document.querySelector('#extra-payment .metric:nth-child(1) .metric-value');
-    const interestSaved = document.querySelector('#extra-payment .metric:nth-child(2) .metric-value');
+    // Calculate based on comparison mode
+    let baseRate, baseEMI, baseTenure;
     
-    // Calculate impact on tenure
-    // This is a simplified calculation - in real app would use more complex formula
-    const totalMonthlyPayment = this.loanData.newEMI + effectiveMonthly;
-    const paymentRatio = totalMonthlyPayment / this.loanData.newEMI;
-    const newMonths =  paymentRatio
-    Math.round(this.loanData.tenure / paymentRatio);
-    const monthsSaved = this.loanData.tenure - newMonths;
-    const interestSavingsAmount = Math.round(monthsSaved * this.loanData.newEMI);
+    if (this.comparisonMode === 'original') {
+      // Compare with original loan
+      baseRate = this.loanData.currentRate;
+      baseEMI = this.loanData.currentEMI;
+      baseTenure = this.loanData.tenure;
+    } else {
+      // Compare with refinanced loan
+      baseRate = this.loanData.newRate;
+      baseEMI = this.loanData.currentEMI; // Same EMI but lower rate
+      
+      // Calculate the new tenure with lower rate (before extra payments)
+      const monthlyRate = baseRate / 12 / 100;
+      baseTenure = Math.ceil(-Math.log(1 - (this.loanData.amount * monthlyRate / baseEMI)) / Math.log(1 + monthlyRate));
+    }
     
-    newTenure.textContent = `${newMonths} months`;
-    interestSaved.textContent = `₹${this.formatCurrency(interestSavingsAmount)}`;
+    // Update metrics based on selected comparison mode
+    // Calculate impact on tenure with extra payments
+    const totalMonthlyPayment = baseEMI + effectiveMonthly;
+    const monthlyRate = baseRate / 12 / 100;
+    
+    // Calculate new tenure with extra payments using amortization formula
+    const newMonths = Math.ceil(-Math.log(1 - (this.loanData.amount * monthlyRate / totalMonthlyPayment)) / Math.log(1 + monthlyRate));
+    
+    // Calculate months saved compared to base tenure
+    const monthsSaved = baseTenure - newMonths;
+    
+    // Calculate interest savings
+// Calculate interest savings
+let interestSavingsAmount;
+if (this.comparisonMode === 'refinanced' && extraAmount === 0) {
+  // Use the already calculated interest savings from the EMI manager
+  // Get the EMI manager instance
+  const emiManager = window.exploreOptions?.emiManager;
+  
+  if (emiManager) {
+    // Get the current scenario data which includes interest saved
+    const emiScenario = emiManager.getCurrentScenario();
+    interestSavingsAmount = emiScenario.interestSaved;
+  } else {
+    // Fallback calculation if EMI manager is not accessible
+    const originalTotalPayment = this.loanData.currentEMI * this.loanData.tenure;
+    const refinancedTotalPayment = this.loanData.currentEMI * baseTenure;
+    interestSavingsAmount = originalTotalPayment - refinancedTotalPayment;
+  }
+} else {
+  // Normal calculation for extra payments
+  // Total payment with base plan
+  const baseTotalPayment = baseEMI * baseTenure;
+  const baseInterestPaid = baseTotalPayment - this.loanData.amount;
+  
+  // Total payment with extra payments
+  const newTotalPayment = (baseEMI * newMonths) + (extraAmount * Math.ceil(newMonths * frequencyFactor));
+  const newInterestPaid = newTotalPayment - this.loanData.amount;
+  
+  // Interest saved from extra payments
+  const extraPaymentSavings = baseInterestPaid - newInterestPaid;
+  
+  // For refinanced loan mode with extra payments, add the savings from refinancing
+  if (this.comparisonMode === 'refinanced' && extraAmount > 0) {
+    // Get base refinancing savings
+    const emiManager = window.exploreOptions?.emiManager;
+    let refinancingSavings = 0;
+    
+    if (emiManager) {
+      // Get savings calculated in EMI manager
+      const emiScenario = emiManager.getCurrentScenario();
+      refinancingSavings = emiScenario.interestSaved;
+    } else {
+      // Fallback calculation
+      const originalTotalPayment = this.loanData.currentEMI * this.loanData.tenure;
+      const refinancedTotalPayment = this.loanData.currentEMI * baseTenure;
+      refinancingSavings = originalTotalPayment - refinancedTotalPayment;
+    }
+    
+    // Cumulative savings (refinancing + extra payments)
+    interestSavingsAmount = refinancingSavings + extraPaymentSavings;
+  } else {
+    // For original loan mode, just show extra payment savings
+    interestSavingsAmount = extraPaymentSavings;
+  }
+}
+
+// Get metrics elements
+const newTenureElement = document.querySelector('#extra-payment .metric:nth-child(1) .metric-value');
+const interestSavedElement = document.querySelector('#extra-payment .metric:nth-child(2) .metric-value');
+
+// Update metrics display
+if (newTenureElement) {
+  newTenureElement.textContent = `${newMonths} months`;
+}
+
+if (interestSavedElement) {
+  interestSavedElement.textContent = `₹${this.formatCurrency(Math.round(interestSavingsAmount))}`;
+  interestSavedElement.classList.add('value-positive');
+}
     
     // Update subtext
     const tenureSubtext = document.querySelector('#extra-payment .metric:nth-child(1) .metric-subtext');
-    tenureSubtext.textContent = `was ${this.loanData.tenure} months`;
+    if (tenureSubtext) {
+      tenureSubtext.textContent = `was ${baseTenure} months`;
+    }
     
     const savingsSubtext = document.querySelector('#extra-payment .metric:nth-child(2) .metric-subtext');
-    
-    // if (frequency === 'monthly') {
-    //   savingsSubtext.textContent = 'with monthly extra payments';
-    // } else {
-      savingsSubtext.textContent = `with ${frequency} extra payments`;
-    // }
+    if (savingsSubtext) {
+      // if (this.comparisonMode === 'original') {
+        savingsSubtext.textContent = `vs. original loan (${this.loanData.currentRate}%)`;
+      // } else {
+      //   savingsSubtext.textContent = `vs. optimized loan (${this.loanData.newRate}%)`;
+      // }
+    }
     
     return {
       extraAmount: extraAmount,
       frequency: frequency,
       effectiveMonthly: effectiveMonthly,
+      comparisonMode: this.comparisonMode,
+      baseEMI: baseEMI,
+      baseRate: baseRate,
+      baseTenure: baseTenure,
       newTenure: newMonths,
       monthsSaved: monthsSaved,
-      interestSaved: interestSavingsAmount
+      interestSaved: Math.round(interestSavingsAmount)
     };
   }
   
@@ -187,6 +300,24 @@ class ExtraPaymentManager {
   setFrequency(frequency) {
     if (this.frequencySelect) {
       this.frequencySelect.value = frequency;
+      this.updateExtraPaymentImpact();
+    }
+  }
+  
+  /**
+   * Set the comparison mode
+   * @param {string} mode - The comparison mode ('original' or 'refinanced')
+   */
+  setComparisonMode(mode) {
+    if (mode === 'original' || mode === 'refinanced') {
+      this.comparisonMode = mode;
+      
+      // Update radio button if it exists
+      const radio = document.querySelector(`#compare-toggle input[value="${mode}"]`);
+      if (radio) {
+        radio.checked = true;
+      }
+      
       this.updateExtraPaymentImpact();
     }
   }
