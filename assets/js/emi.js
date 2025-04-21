@@ -4,13 +4,14 @@
 class EMIManager {
   constructor(config = {}) {
     // Default loan parameters
-    this.loanData = config.loanData || {
-      amount: 10000000,      // Principal amount (₹1 crore)
-      currentRate: 9,        // Current interest rate (9%)
-      newRate: 8.1,          // New interest rate (8.1%)
-      currentEMI: 89973,     // Current EMI amount
-      tenure: 240            // months (fix the syntax error here)
-    };
+    this.loanData = config.loanData ;
+    // || {
+    //   amount: 10000000,      // Principal amount (₹1 crore)
+    //   currentRate: 9,        // Current interest rate (9%)
+    //   newRate: 8.1,          // New interest rate (8.1%)
+    //   currentEMI: 89973,     // Current EMI amount
+    //   tenure: 240            // months (fix the syntax error here)
+    // };
     
     // Get DOM elements
     this.emiSlider = document.getElementById('emiSlider');
@@ -188,6 +189,13 @@ class EMIManager {
   getCurrentScenario() {
     const emiAmount = parseInt(this.emiSlider.value);
     return this.updateEMIImpact();
+  }
+
+  updateLoanData(loanData) {
+    console.log("EMIManager.updateLoanData called with:", loanData);
+    this.loanData = { ...this.loanData, ...loanData };
+    this.updateEMIImpact();
+    return this.getCurrentScenario();
   }
   
   /**

@@ -4,13 +4,14 @@
 class ExtraPaymentManager {
   constructor(config = {}) {
     // Default loan parameters
-    this.loanData = config.loanData || {
-      amount: 10000000,        // Principal amount (₹1 crore)
-      currentRate: 9,          // Current interest rate (9%)
-      newRate: 8.1,            // New interest rate (8.1%)
-      currentEMI: 89973,       // Current EMI amount
-      tenure: 240 // months
-    };
+    this.loanData = config.loanData; 
+    // || {
+    //   amount: 10000000,        // Principal amount (₹1 crore)
+    //   currentRate: 9,          // Current interest rate (9%)
+    //   newRate: 8.1,            // New interest rate (8.1%)
+    //   currentEMI: 89973,       // Current EMI amount
+    //   tenure: 240 // months
+    // };
     
     // Get DOM elements
     this.extraPaymentSlider = document.getElementById('extraPaymentSlider');
@@ -282,6 +283,13 @@ if (interestSavedElement) {
     return this.updateExtraPaymentImpact();
   }
   
+  updateLoanData(loanData) {
+    console.log("ExtraPaymentManager.updateLoanData called with:", loanData);
+    this.loanData = { ...this.loanData, ...loanData };
+    this.updateExtraPaymentImpact();
+    return this.getCurrentScenario();
+  }
+
   /**
    * Set the extra payment amount
    * @param {number} amount - The amount to set

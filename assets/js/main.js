@@ -10,11 +10,11 @@ class ExploreOptions {
       theme: config.theme || 'dark',
       onScenarioChange: config.onScenarioChange || function() {},
       loanData: config.loanData || {
-        amount: 10000000,        // Principal amount (₹1 crore)
-      currentRate: 9,          // Current interest rate (9%)
-      newRate: 8.1,            // New interest rate (8.1%)
-      currentEMI: 89973,       // Current EMI amount
-      tenure: 240 // months
+        amount: 15000000,
+        currentRate: 8.5,
+        newRate: 7.8,
+        currentEMI: 150000,
+        tenure: 180          // months (fix the syntax error here)
       }
     };
     
@@ -40,21 +40,12 @@ class ExploreOptions {
     });
     
     // Initialize EMI manager
-    this.emiManager = new EMIManager({
-      loanData: this.config.loanData
-    });
-    
-    // Initialize extra payment manager
-    this.extraPaymentManager = new ExtraPaymentManager({
-      loanData: this.config.loanData
-    });
-    
-    this.sameTenureManager = new SameTenureManager({
-      loanData: this.config.loanData
-    });
-
+    this.emiManager = new EMIManager({ loanData: this.config.loanData });
+    this.extraPaymentManager = new ExtraPaymentManager({ loanData: this.config.loanData });
+    this.sameTenureManager = new SameTenureManager({ loanData: this.config.loanData });
   }
   
+
   /**
    * Apply the selected theme
    */
@@ -108,17 +99,26 @@ class ExploreOptions {
  * Update the loan data
  * @param {Object} loanData - New loan data
  */
-updateLoanData(loanData) {
-  this.config.loanData = { ...this.config.loanData, ...loanData };
-  
-// Refresh managers with new data
-this.emiManager.updateLoanData(this.config.loanData);
-this.extraPaymentManager.updateLoanData(this.config.loanData);
-this.sameTenureManager.updateLoanData(this.config.loanData);
-  
-  // Re-trigger scenario change
-  this.handleTabChange(this.tabManager.getActiveTab());
-}
+  updateLoanData(loanData) {
+    // Update the central data store
+    this.config.loanData = { ...this.config.loanData, ...loanData };
+    
+    // Update each manager with the new data
+    if (this.emiManager && typeof this.emiManager.updateLoanData === 'function') {
+      this.emiManager.updateLoanData(this.config.loanData);
+    }
+    
+    if (this.extraPaymentManager && typeof this.extraPaymentManager.updateLoanData === 'function') {
+      this.extraPaymentManager.updateLoanData(this.config.loanData);
+    }
+    
+    if (this.sameTenureManager && typeof this.sameTenureManager.updateLoanData === 'function') {
+      this.sameTenureManager.updateLoanData(this.config.loanData);
+    }
+    
+    // Refresh the current tab
+    this.handleTabChange(this.tabManager.getActiveTab());
+  }
   
   /**
    * Switch to a specific tab
