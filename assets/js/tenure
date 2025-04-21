@@ -14,14 +14,14 @@ class sameTenureManager {
     };
     
     // Get DOM elements
-    this.newEMIValue = document.querySelector('#same-tenure .metric:nth-child(1) .metric-value');
-    this.monthlySavingsValue = document.querySelector('#same-tenure .metric:nth-child(2) .metric-value');
-    this.totalInterestSavedValue = document.querySelector('#same-tenure2 .metric-row:nth-child(1) .metric-value');
+    const newEMIValue = document.querySelector('#same-tenure1 .metric:nth-child(1) .metric-value');
+    const monthlySavingsValue = document.querySelector('#same-tenure1 .metric:nth-child(2) .metric-value');
+    const totalInterestSavedValue = document.querySelector('#same-tenure2 .metric-row:nth-child(1) .metric-value');
     
     // Get subtext elements
-    this.newEMISubtext = document.querySelector('#same-tenure .metric:nth-child(1) .metric-subtext');
-    this.monthlySavingsSubtext = document.querySelector('#same-tenure .metric:nth-child(2) .metric-subtext');
-    this.totalInterestSavedSubtext = document.querySelector('#same-tenure2 .metric-row:nth-child(1) .metric-subtext');
+  const newEMISubtext = document.querySelector('#same-tenure .metric:nth-child(1) .metric-subtext');
+    const monthlySavingsSubtext = document.querySelector('#same-tenure .metric:nth-child(2) .metric-subtext');
+    const totalInterestSavedSubtext = document.querySelector('#same-tenure2 .metric-row:nth-child(1) .metric-subtext');
     
     // Initialize calculations
     this.updateCalculations();
@@ -44,17 +44,13 @@ class sameTenureManager {
    * Update all calculations for the Same Tenure tab
    */
   updateCalculations() {
-    // console.log("SameTenureManager.updateCalculations called with data:", this.loanData);
-
     // Calculate new EMI with new interest rate
     const newEMI = this.calculateEMI(
       this.loanData.amount,
       this.loanData.newRate,
       this.loanData.tenure
     );
-    // console.log("Calculated new EMI:", newEMI);
-
-
+    
     // Calculate monthly savings
     const monthlySavings = this.loanData.currentEMI - newEMI;
     
@@ -66,11 +62,11 @@ class sameTenureManager {
     
     // Update DOM if elements exist
     if (this.newEMIValue) {
-      this.newEMIValue.textContent = `₹${this.formatCurrency(newEMI)}`;
+      this.newEMIValue.textContent = `₹${this.formatCurrency(newEMIValue)}`;
     }
     
     if (this.monthlySavingsValue) {
-      this.monthlySavingsValue.textContent = `₹${this.formatCurrency(monthlySavings)}`;
+      this.monthlySavingsValue.textContent = `₹${this.formatCurrency(monthlySavingsValue)}`;
       this.monthlySavingsValue.classList.add('value-positive');
     }
     
@@ -126,6 +122,7 @@ class sameTenureManager {
    */
   updateLoanData(loanData) {
     this.loanData = { ...this.loanData, ...loanData };
-    return this.updateCalculations();
+    this.updateCalculations();
+    return this.calculatedValues;
   }
 }
