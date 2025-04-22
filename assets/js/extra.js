@@ -19,6 +19,8 @@ class ExtraPaymentManager {
     this.frequencySelect = document.getElementById('frequencySelect');
     this.extraPaymentPresetButtons = document.querySelectorAll('#extra-payment .preset-button');
     this.comparisonToggle = document.querySelectorAll('#compare-toggle input[type="radio"]');
+    this.updateRateDisplays();
+
     
     // Set default comparison mode
     this.comparisonMode = 'refinanced'; // 'refinanced' or 'original'
@@ -158,19 +160,34 @@ class ExtraPaymentManager {
     
     // Update metrics based on selected comparison mode
     // Calculate impact on tenure with extra payments
-    const totalMonthlyPayment = baseEMI + effectiveMonthly;
-    const monthlyRate = baseRate / 12 / 100;
+   // Calculate impact of extra payments
+let newMonths, monthsSaved;
+
+// Special case: For original loan with no extra payment, tenure remains unchanged
+if (this.comparisonMode === 'original' && extraAmount === 0) {
+  // Simply use the original tenure values with no changes
+  newMonths = this.loanData.tenure;
+  monthsSaved = 0;
+} else {
+  // Regular calculation for all other scenarios
+  const totalMonthlyPayment = baseEMI + effectiveMonthly;
+  const monthlyRate = baseRate / 12 / 100;
+  
+  // Calculate new tenure with extra payments using amortization formula
+  newMonths = Math.ceil(-Math.log(1 - (this.loanData.amount * monthlyRate / totalMonthlyPayment)) / Math.log(1 + monthlyRate));
+  
+  // Calculate months saved compared to base tenure
+  monthsSaved = baseTenure - newMonths;
+}
     
-    // Calculate new tenure with extra payments using amortization formula
-    const newMonths = Math.ceil(-Math.log(1 - (this.loanData.amount * monthlyRate / totalMonthlyPayment)) / Math.log(1 + monthlyRate));
-    
-    // Calculate months saved compared to base tenure
-    const monthsSaved = baseTenure - newMonths;
-    
-    // Calculate interest savings
+
 // Calculate interest savings
 let interestSavingsAmount;
-if (this.comparisonMode === 'refinanced' && extraAmount === 0) {
+
+// Special case: Original loan with no extra payment should show zero savings
+if (this.comparisonMode === 'original' && extraAmount === 0) {
+  interestSavingsAmount = 0;
+} else if (this.comparisonMode === 'refinanced' && extraAmount === 0) {
   // Use the already calculated interest savings from the EMI manager
   // Get the EMI manager instance
   const emiManager = window.exploreOptions?.emiManager;
@@ -265,6 +282,20 @@ if (interestSavedElement) {
       interestSaved: Math.round(interestSavingsAmount)
     };
   }
+
+  updateRateDisplays() {
+    const optimizedRateElement = document.getElementById('optimized-rate');
+    const originalRateElement = document.getElementById('original-rate');
+    
+    if (optimizedRateElement) {
+      optimizedRateElement.textContent = this.loanData.newRate;
+    }
+    
+    if (originalRateElement) {
+      originalRateElement.textContent = this.loanData.currentRate;
+    }
+  }
+  
   
   /**
    * Format a number as currency with thousands separators
@@ -286,6 +317,8 @@ if (interestSavedElement) {
   updateLoanData(loanData) {
     console.log("ExtraPaymentManager.updateLoanData called with:", loanData);
     this.loanData = { ...this.loanData, ...loanData };
+
+    this.updateRateDisplays();
     this.updateExtraPaymentImpact();
     return this.getCurrentScenario();
   }

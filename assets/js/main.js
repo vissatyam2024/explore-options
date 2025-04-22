@@ -10,11 +10,12 @@ class ExploreOptions {
       theme: config.theme || 'dark',
       onScenarioChange: config.onScenarioChange || function() {},
       loanData: config.loanData || {
-        amount: 15000000,
-        currentRate: 8.5,
-        newRate: 7.8,
-        currentEMI: 150000,
-        tenure: 180          // months (fix the syntax error here)
+        amount: 10000000,        // Principal amount (₹1 crore)
+        currentRate: 9,          // Current interest rate (9%)
+        newRate: 8.1,            // New interest rate (8.1%)
+        currentEMI: 89973,       // Current EMI amount
+        tenure: 240 
+           // months (fix the syntax error here)
       }
     };
     
